@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <link rel="shortcut icon" type="image/ico" href="./img/favicon.ico" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Look to See</title>
+    <link rel="stylesheet" href="./css/style.css">
+</head>
+
+<body>
+    <p>Eye Tracker</p>
+    <div class="panels">
+        <div class="panels-menu" id="startTraning">START TRANING</div>
+        <div class="panels-menu" id="modelFitting">MODEL FIT</div>
+        <div class="panels-menu" id="startprediction">START PREDICTIOn</div>
+    </div>
+    <div class="panels">
+        <div class="left panels-menu">
+            <h1>A</h1>
+        </div>
+        <div class="panels-menu">
+            <canvas id="eyes" width="50" height="25"></canvas>
+        </div>
+        <div class="right  panels-menu">
+            <h1>B</h1>
+        </div>
+    </div>
+    <div>
+        <div class="video-parent">
+            <video id="webcam" width="400" height="300" autoplay></video>
+            <canvas id="overlay" width="400" height="300"></canvas>
+        </div>
+    </div>
+    <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@2.0.0/dist/tf.min.js"></script>
+    <script type="text/javascript" src="./js/clmtrackr.js"></script>
+    <script type="text/javascript" src="./js/main.js"></script>
+</body>
+
+</html>
