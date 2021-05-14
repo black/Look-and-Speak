@@ -7,35 +7,84 @@
     <link rel="shortcut icon" type="image/ico" href="./img/favicon.ico" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Look to See</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0/dist/css/bootstrap.min.css" rel="stylesheet"
+        crossorigin="anonymous">
     <link rel="stylesheet" href="./css/style.css">
 </head>
 
 <body>
-    <p>Eye Tracker</p>
-    <div class="panels">
-        <div class="panels-menu" id="startTraning">START TRANING</div>
-        <div class="panels-menu" id="modelFitting">MODEL FIT</div>
-        <div class="panels-menu" id="startprediction">START PREDICTIOn</div>
-    </div>
-    <div class="panels">
-        <div class="left panels-menu">
-            <h1>A</h1>
+    <div class="container">
+        <div class="row align-center bg-light">
+            <div class="col-3  my-auto">
+                <p class="display-6">Eye Tracker</p>
+            </div>
+            <div class="col-6 my-auto bg-primary position-relative">
+                <canvas id="eyes" class="bg-danger"></canvas>
+            </div>
+            <div class="col-3 my-auto">
+                <div class="d-flex flex-column">
+                    <div class="btn-group" role="group" aria-label="Basic radio toggle button group">
+                        <input type="radio" class="btn-check" name="btnradio" id="startDataCollection"
+                            autocomplete="off">
+                        <label class="btn btn-outline-primary" for="startDataCollection">TRAIN</label>
+
+                        <input type="radio" class="btn-check" name="btnradio" id="modelFitting" autocomplete="off">
+                        <label class="btn btn-outline-primary" for="modelFitting">FIT</label>
+
+                        <input type="radio" class="btn-check" name="btnradio" id="startprediction" autocomplete="off">
+                        <label class="btn btn-outline-primary" for="startprediction">PREDICT</label>
+                    </div>
+                    <div class="d-flex flex-row justify-content-between">
+                        <div class="my-1 d-block w-100 invisible" id="data-collection">
+                            <div class="progress">
+                                <div class="progress-bar progress-bar-striped bg-success progress-bar-animated"
+                                    role="progressbar" aria-valuenow="75" aria-valuemin="0" aria-valuemax="100"
+                                    style="width: 100%"></div>
+                            </div>
+                        </div>
+                        <div class="my-1 d-block w-100 invisible" id="training">
+                            <div class="progress">
+                                <div class="progress-bar progress-bar-striped bg-warning progress-bar-animated"
+                                    role="progressbar" aria-valuenow="75" aria-valuemin="0" aria-valuemax="100"
+                                    style="width: 100%"></div>
+                            </div>
+                        </div>
+                        <div class="my-1 d-block w-100 invisible" id="predicting">
+                            <div class="progress">
+                                <div class="progress-bar progress-bar-striped bg-danger progress-bar-animated"
+                                    role="progressbar" aria-valuenow="75" aria-valuemin="0" aria-valuemax="100"
+                                    style="width: 100%"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
-        <div class="panels-menu">
-            <canvas id="eyes" width="50" height="25"></canvas>
+        <div class="row">
+            <div class="col-6 border panels text-center" id="left">
+                <h1>LEFT</h1>
+            </div>
+            <div class="col-6 border panels text-center" id="right">
+                <h1>RIGHT</h1>
+            </div>
         </div>
-        <div class="right  panels-menu">
-            <h1>B</h1>
-        </div>
-    </div>
-    <div>
-        <div class="video-parent">
-            <video id="webcam" width="400" height="300" autoplay></video>
-            <canvas id="overlay" width="400" height="300"></canvas>
+        <div class="row">
+            <div class="col-6">
+                <div class="position-relative">
+                    <video class="position-absolute" id="webcam" width="400" height="300" autoplay></video>
+                    <canvas class="position-absolute" id="overlay" width="400" height="300"></canvas>
+                </div>
+            </div>
+            <div class="col-6 bg-danger">
+                Heloow
+                <div id="image_for_crop"></div>
+            </div>
         </div>
     </div>
     <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@2.0.0/dist/tf.min.js"></script>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0/dist/js/bootstrap.bundle.min.js">
+    </script>
     <script type="text/javascript" src="./js/clmtrackr.js"></script>
     <script type="text/javascript" src="./js/main.js"></script>
 </body>
