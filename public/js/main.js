@@ -2,6 +2,10 @@ $(document).ready(function () {
     let currentModel;
     let traningState = false;
 
+    let imageWidth = $('#eyes')[0].width;
+    let imageHeight = $('#eyes')[0].height;
+    let imageChannels = 3;
+
     let createModel = () => {
         const model = tf.sequential();
         let config_one = {
@@ -9,7 +13,7 @@ $(document).ready(function () {
             filters: 20,
             strides: 1,
             activation: 'relu',
-            inputShape: [$('#eyes')[0].height, $('#eyes')[0].width, 3],
+            inputShape: [imageHeight, imageWidth, imageChannels],
         }
         model.add(tf.layers.conv2d(config_one));
 
@@ -39,75 +43,43 @@ $(document).ready(function () {
     }
 
 
-    const dataset = {
-        train: {
-            n: 0,
-            x: null,
-            y: null,
-        },
-        val: {
-            n: 0,
-            x: null,
-            y: null,
-        },
-    }
+    let imageArray = [];
+    let labelArray = [];
 
     let collectData = (label) => {
-        // Take the latest image from the eyes canvas and add it to our dataset.
-        tf.tidy(function () {
-            const image = getImage();
-            const eyeDir = tf.tensor1d(label).expandDims(0);
-
-            // Choose whether to add it to training (80%) or validation (20%) set:
-            let dec = Math.random() > 0.2 ? 'train' : 'val'
-            const subset = dataset[dec];
-            // console.log("eyeDir", dec, subset);
-            if (subset.x == null) {
-                // Create new tensors
-                subset.x = tf.keep(image);
-                subset.y = tf.keep(eyeDir);
-            } else {
-                // Concatenate it to existing tensors
-                const oldX = subset.x;
-                const oldY = subset.y;
-                subset.x = tf.keep(oldX.concat(image, 0));
-                subset.y = tf.keep(oldY.concat(eyeDir, 0));
-            }
-            // Increase counter
-            subset.n += 1;
-        });
+        const img = tf.tidy(() => {
+            const captureImg = getImage();
+            //console.log(captureImg.shape)
+            return captureImg;
+        })
+        imageArray.push(img)
+        labelArray.push(label) //--- labels are 0,1,2
     }
 
 
     let fitModel = async () => {
-        /*
-        How this bactchSize works here in tensorflow.js?
-        Why are we making batchSize like this?
-        */
-        let batchSize = Math.floor(dataset.train.n * 0.1);
-        if (batchSize < 4) {
-            batchSize = 4;
-        } else if (batchSize > 64) {
-            batchSize = 64;
-        }
+        let imageSet = tf.concat(imageArray);
+        // imageSet.print()
+        console.log(imageSet.shape)
+
+        let labelSet = tf.oneHot(tf.tensor1d(labelArray, 'int32'), 3);
 
         if (currentModel == null) {
             currentModel = createModel();
+            currentModel.summary();
         }
 
-        await currentModel.fit(dataset.train.x, dataset.train.y, {
-            batchSize: batchSize,
+        await currentModel.fit(imageSet, labelSet, {
+            batchSize: 4,
             epochs: 20,
             shuffle: true,
-            validationData: [dataset.val.x, dataset.val.y],
+            validationSplit: 0.1,
             callbacks: {
-                onTrainBegin: () => {
-                    $('#modelFitting').removeClass("invisible");
-                    console.log("Training Start");
-                },
-                onTrainEnd: () => {
-                    $('#modelFitting').addClass("invisible");
-                    console.log("Traing End");
+                onTrainBegin: () => console.log("Training Start"),
+                onTrainEnd: () => console.log("Traing End"),
+                onBatchEnd: async (num, log) => {
+                    await tf.nextFrame();
+                    console.log(log)
                 }
             }
         })
@@ -118,52 +90,31 @@ $(document).ready(function () {
             return;
         }
 
-        tf.tidy(function () {
+        tf.tidy(() => {
             const image = getImage();
             const prediction = currentModel.predict(image);
-            prediction.data().then(prediction => {
-                $('#startprediction').removeClass('invisible');
-                /* 
-                This would depend on how we design the output layer 
-                */
-                let idx = prediction.reduce((iMax, x, i, arr) => x > arr[iMax] ? i : iMax, 0);
-                console.log(idx, prediction)
-                switch (idx) {
+            prediction.data().then(pred => {
+                console.log('prediction', pred);
+                const max = Math.max.apply(Math, pred.map((i) => i));
+                const maxIndex = pred.indexOf(max);
+                switch (maxIndex) {
                     case 0:
-                        $('.panels').removeClass("bg-primary");
-                        $('#left').addClass("bg-primary")
+                        console.log("left");
                         break;
                     case 1:
-                        $('.panels').removeClass("bg-primary");
-                        break;
+                        console.log("right");
                     case 2:
-                        $('.panels').removeClass("bg-primary");
-                        $('#right').addClass("bg-primary")
-                        break;
+                        console.log("normal");
                 }
-            });
+            })
         });
     }
 
     function getImage() {
-        // Capture the current image in the eyes canvas as a tensor.
         return tf.tidy(function () {
-
-            // var ff = new Image();
-            // ff.id = "pic";
-            // ff.src = $('#eyes')[0];
-            // document.getElementById('image_for_crop').appendChild(ff);
-
-            console.log($('#eyes')[0])
-
             const image = tf.browser.fromPixels($('#eyes')[0]);
-            // console.log("image", image.shape, image);
-            // Add a batch dimension:
             const batchedImage = image.expandDims(0);
-            // console.log("batchedImage", batchedImage.shape, batchedImage);
-            // Normalize and return it:
-            const norm = batchedImage.toFloat().div(tf.scalar(127)).sub(tf.scalar(1));
-            // console.log("mormalized", norm)
+            const norm = batchedImage.toFloat().div(tf.scalar(255)).sub(tf.scalar(1));
             return norm;
         });
     }
@@ -244,15 +195,15 @@ $(document).ready(function () {
         }
         switch (event.keyCode) {
             case 37:
-                collectData([1, 0, 0]);
+                collectData(0);
                 console.log("left");
                 break;
             case 39:
-                collectData([0, 0, 1]);
+                collectData(1);
                 console.log("right");
                 break;
             default:
-                collectData([0, 1, 0]);
+                collectData(2);
                 console.log("normal");
                 break;
         }
@@ -263,20 +214,40 @@ $(document).ready(function () {
     //Start Data Collection
     $('#startDataCollection').on('click', function () {
         traningState = !traningState;
-        $('#data-collection').toggleClass("invisible")
-        console.log("Collecting Data");
+        $(this).find('.progress-bar').toggleClass("progress-bar-striped progress-bar-animated");
+        if (!traningState) {
+            //console.log(dataset)
+        }
     });
 
     //Start Model training
-    $('#modelFitting').on('click', function () {
-        fitModel();
-        console.log("Training model");
+    $('#modelFitting').on('click', () => {
+        $(this).find('.progress-bar').toggleClass("progress-bar-striped progress-bar-animated");
+        fitModel().then(results => {
+            $(this).find('.progress-bar').toggleClass("progress-bar-striped progress-bar-animated")
+            console.log("Traing End");
+        });
     });
 
     // Start Prediction
     $('#startprediction').on('click', function () {
+        $(this).find('.progress-bar').toggleClass("progress-bar-striped progress-bar-animated");
         predictData();
         setInterval(predictData, 100);
-        console.log("Starting Prediction");
     });
 });
+
+
+
+/*Erros identified*/
+/* the Array of Tensors that you are passing to your model is not the size the model expected
+https: //stackoverflow.com/questions/54828883/error-when-checking-model-input-the-array-of-tensors-that-you-are-passing-to-yo
+
+// Expected convolution2d_input_1 to have 4 dimensions, but got array with shape error in keras
+https: //stackoverflow.com/questions/52718451/expected-conv2d-1-input-to-have-4-dimensions-but-got-array-with-shape-15936-6
+
+// new error
+All tensors passed to stack must have matching shapes Shapes 1, 150, 300, 3 and must match
+
+// expected conv2d_Conv2D1_input to have 4 dimension(s).but got array with shape 15, 1, 150, 300, 3
+*/
