@@ -1,3 +1,14 @@
+/*
+
+1. how to find proper combitnation of activation function in input and output layer
+2. How to choose loss function 
+3. How to chosse learning rate
+4. How to decide the batchsize
+5. How to choose number of epochs
+
+*/
+
+
 $(document).ready(function () {
     let currentModel;
     let traningState = false;
@@ -9,11 +20,11 @@ $(document).ready(function () {
     let createModel = () => {
         const model = tf.sequential();
         let config_one = {
-            kernelSize: 5,
-            filters: 20,
+            kernelSize: 3,
+            filters: 40,
             strides: 1,
             activation: 'relu',
-            inputShape: [imageHeight, imageWidth, imageChannels],
+            inputShape: [imageHeight, imageWidth, imageChannels]
         }
         model.add(tf.layers.conv2d(config_one));
 
@@ -35,10 +46,13 @@ $(document).ready(function () {
 
         // Use ADAM optimizer with learning rate of 0.0005 and MSE loss
         let config_compile = {
-            optimizer: tf.train.adam(0.0005),
-            loss: 'meanSquaredError',
+            optimizer: tf.train.adam(0.000005),
+            loss: 'categoricalCrossentropy',
         }
         model.compile(config_compile);
+
+        tf.memory()
+
         return model;
     }
 
@@ -59,9 +73,6 @@ $(document).ready(function () {
 
     let fitModel = async () => {
         let imageSet = tf.concat(imageArray);
-        // imageSet.print()
-        console.log(imageSet.shape)
-
         let labelSet = tf.oneHot(tf.tensor1d(labelArray, 'int32'), 3);
 
         if (currentModel == null) {
@@ -70,16 +81,16 @@ $(document).ready(function () {
         }
 
         await currentModel.fit(imageSet, labelSet, {
-            batchSize: 4,
-            epochs: 20,
+            batchSize: 2,
+            epochs: 10,
             shuffle: true,
-            validationSplit: 0.1,
+            validationSplit: 0.2,
             callbacks: {
                 onTrainBegin: () => console.log("Training Start"),
                 onTrainEnd: () => console.log("Traing End"),
-                onBatchEnd: async (num, log) => {
-                    await tf.nextFrame();
-                    console.log(log)
+                onBatchEnd: async (batch, log) => {
+                    // await tf.nextFrame();
+                    console.log(batch, log)
                 }
             }
         })
@@ -100,11 +111,17 @@ $(document).ready(function () {
                 switch (maxIndex) {
                     case 0:
                         console.log("left");
+                        $('.panels').removeClass('bg-primary')
+                        $('#left').addClass('bg-primary')
                         break;
                     case 1:
-                        console.log("right");
-                    case 2:
                         console.log("normal");
+                        $('.panels').removeClass('bg-primary')
+                        $('#normal').addClass('bg-primary')
+                    case 2:
+                        console.log("right");
+                        $('.panels').removeClass('bg-primary')
+                        $('#right').addClass('bg-primary')
                 }
             })
         });
@@ -199,11 +216,11 @@ $(document).ready(function () {
                 console.log("left");
                 break;
             case 39:
-                collectData(1);
+                collectData(2);
                 console.log("right");
                 break;
             default:
-                collectData(2);
+                collectData(1);
                 console.log("normal");
                 break;
         }
@@ -221,7 +238,7 @@ $(document).ready(function () {
     });
 
     //Start Model training
-    $('#modelFitting').on('click', () => {
+    $('#modelFitting').on('click', function () {
         $(this).find('.progress-bar').toggleClass("progress-bar-striped progress-bar-animated");
         fitModel().then(results => {
             $(this).find('.progress-bar').toggleClass("progress-bar-striped progress-bar-animated")
