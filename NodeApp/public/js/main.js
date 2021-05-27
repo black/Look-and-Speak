@@ -21,7 +21,7 @@ $(document).ready(function () {
         const model = tf.sequential();
         let config_one = {
             kernelSize: 3,
-            filters: 40,
+            filters: 20,
             strides: 1,
             activation: 'relu',
             inputShape: [imageHeight, imageWidth, imageChannels]
@@ -34,25 +34,42 @@ $(document).ready(function () {
         }
         model.add(tf.layers.maxPooling2d(config_two));
 
+        // add more layers
+        let config_three = {
+            kernelSize: 5,
+            filters: 16,
+            strides: 1,
+            activation: 'relu',
+        }
+        model.add(tf.layers.conv2d(config_three));
+
+        let config_four = {
+            poolSize: [2, 2],
+            strides: [2, 2],
+        }
+        model.add(tf.layers.maxPooling2d(config_four));
+
+
+
         model.add(tf.layers.flatten());
-        model.add(tf.layers.dropout(0.2));
+        // model.add(tf.layers.dropout(0.2)); / no need becuase we don't know if the model is overfitting.
 
         // Two output values x and y
         let congfig_output = {
             units: 3,
-            activation: 'tanh',
+            activation: 'softmax',
         }
         model.add(tf.layers.dense(congfig_output));
 
         // Use ADAM optimizer with learning rate of 0.0005 and MSE loss
+        const LEARNING_RATE = 0.0001;
+        const optimizer = tf.train.adam(LEARNING_RATE);
         let config_compile = {
-            optimizer: tf.train.adam(0.000005),
+            optimizer: optimizer,
             loss: 'categoricalCrossentropy',
+            metrics: ['accuracy']
         }
         model.compile(config_compile);
-
-        tf.memory()
-
         return model;
     }
 
@@ -72,7 +89,10 @@ $(document).ready(function () {
 
 
     let fitModel = async () => {
-        let imageSet = tf.concat(imageArray);
+        let imageSet = tf.tidy(() => {
+            const imgset = tf.concat(imageArray);
+            return imgset;
+        });
         let labelSet = tf.oneHot(tf.tensor1d(labelArray, 'int32'), 3);
 
         if (currentModel == null) {
@@ -80,17 +100,18 @@ $(document).ready(function () {
             currentModel.summary();
         }
 
+        console.log(tf.memory())
+
         await currentModel.fit(imageSet, labelSet, {
             batchSize: 2,
-            epochs: 10,
+            epochs: 20,
             shuffle: true,
-            validationSplit: 0.2,
+            validationSplit: 0.1,
             callbacks: {
                 onTrainBegin: () => console.log("Training Start"),
                 onTrainEnd: () => console.log("Traing End"),
-                onBatchEnd: async (batch, log) => {
-                    // await tf.nextFrame();
-                    console.log(batch, log)
+                onEpochEnd: (epoch, logs) => {
+                    console.log("Epoch-->", epoch, logs)
                 }
             }
         })
