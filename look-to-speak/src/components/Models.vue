@@ -48,12 +48,14 @@ export default {
             this.status = "Intializing Model" + this.canvasWidth + " \t" + this.canvasHeight;
         },
         dataCollect() {
-            this.status = "Collecting Data";
             //    this.model.dataCollect(this.elm,)
+            this.status = "Collecting Data";
+            this.emitter.emit('trigger','left')
         },
         trainModel() {
             //    this.model.trainModel()
             this.status = "Training Model";
+            this.emitter.emit('trigger','right')
         },
         startPrediction() {
             this.status = "Predicting";

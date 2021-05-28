@@ -66,7 +66,7 @@ export default {
                 const resizeFactorX = this.video.videoWidth / this.video.width;
                 const resizeFactorY = this.video.videoHeight / this.video.height;
 
-                this.$emit('eyeImage',{
+                this.$emit('trigger',{
                   image:this.video,
                   w:eyesRect[0] * resizeFactorX, 
                   h:eyesRect[1] * resizeFactorY,
