@@ -29,8 +29,8 @@ export default {
         initCanvasAndWebCam() {
             this.overlayCanvas = this.$refs.overlay;
             this.overlayCanvasContext = this.overlayCanvas.getContext('2d');
-            this.eyesCanvas = this.$refs.eyes;
-            this.eyesCanvasContext = this.eyesCanvas.getContext('2d');
+            // this.eyesCanvas = this.$refs.eyes;
+            // this.eyesCanvasContext = this.eyesCanvas.getContext('2d');
         },
         initCLMTracker() {
             this.ctrack = new clm.tracker();
@@ -62,19 +62,30 @@ export default {
                 const eyesRect = this.getEyesRectangle(currentPosition);
                 this.overlayCanvasContext.strokeStyle = 'red';
                 this.overlayCanvasContext.strokeRect(eyesRect[0], eyesRect[1], eyesRect[2], eyesRect[3]);
-
-                // The video might internally have a different size, so we need these
-                // factors to rescale the eyes rectangle before cropping:
+                /*
                 const resizeFactorX = this.video.videoWidth / this.video.width;
                 const resizeFactorY = this.video.videoHeight / this.video.height;
 
+                this.$emit('eyeImage',{
+                  image:this.video,
+                  w:eyesRect[0] * resizeFactorX, 
+                  h:eyesRect[1] * resizeFactorY,
+                  w1:eyesRect[0] * resizeFactorX,
+                  h2:eyesRect[1] * resizeFactorY
+                })
+                */
+                // The video might internally have a different size, so we need these
+                // factors to rescale the eyes rectangle before cropping:
+                // const resizeFactorX = this.video.videoWidth / this.video.width;
+                //const resizeFactorY = this.video.videoHeight / this.video.height;
+
                 // // Crop the eyes from the video and paste them in the eyes canvas:  
-                this.eyesCanvasContext.drawImage(
-                    this.video,
-                    eyesRect[0] * resizeFactorX, eyesRect[1] * resizeFactorY,
-                    eyesRect[2] * resizeFactorX, eyesRect[3] * resizeFactorY,
-                    0, 0, this.eyesCanvas.width, this.eyesCanvas.height
-                );
+                // this.eyesCanvasContext.drawImage(
+                //     this.video,
+                //     eyesRect[0] * resizeFactorX, eyesRect[1] * resizeFactorY,
+                //     eyesRect[2] * resizeFactorX, eyesRect[3] * resizeFactorY,
+                //     0, 0, this.eyesCanvas.width, this.eyesCanvas.height
+                // );
             }
         },
         getEyesRectangle(positions) {
