@@ -1,19 +1,21 @@
+"use strict"
+
 import * as tf from '@tensorflow/tfjs'
 
-class eyeModel {
+export default class EyeModel {
     constructor() {
         this.model = tf.sequential();
         this.imageArray = []
         this.labelArray = []
     }
 
-    createModel(w, h) {
+    createModel(w, h, ch) {
         let config_one = {
             kernelSize: 3,
             filters: 20,
             strides: 1,
             activation: 'relu',
-            inputShape: [h, w, 3]
+            inputShape: [h, w, ch]
         }
         this.model.add(tf.layers.conv2d(config_one));
 
@@ -133,8 +135,4 @@ class eyeModel {
             return norm;
         });
     }
-}
-
-export default {
-    eyeModel
 }
