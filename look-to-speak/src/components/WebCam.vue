@@ -1,14 +1,11 @@
-<template>
-<!-- <div class="bg-green-600 p-10">
-    <video ref="webcam" id="webcam" width="400" height="300" class="bg-blue-800 rounded"></video>
-    <canvas ref="overlay" id="overlay" width="400" height="300"></canvas>
-</div> -->
+<template> 
 <div class="bg-green-400">
     <div class="p-10">
         <div class="relative h-100 w-100 ">
-            <video ref="webcam" id="webcam" class="img-fluid rounded" width="400" height="300" autoplay loop></video>
-            <canvas ref="overlay" id="overlay" class="absolute img-fluid rounded top-0" width="400" height="300"></canvas>
+            <video ref="webcam" id="webcam" class="rounded" width="400" height="300" autoplay loop></video>
+            <canvas ref="overlay" id="overlay" class="absolute rounded top-0" width="400" height="300"></canvas>
         </div>
+         <div class="cursor-pointer px-7 py-3 bg-green-500 text-green-800 rounded font-semibold text-center">{{face}}</div>
     </div>
 </div>
 </template>
@@ -31,7 +28,7 @@ export default {
             ctrack: null,
             w: 400,
             h: 300,
-            counter: 0
+            face: 0
         }
     },
     methods: {
@@ -64,44 +61,24 @@ export default {
 
             // Check if a face is detected, and if so, track it.
             let currentPosition = this.ctrack.getCurrentPosition();
-            console.log(this.counter++, currentPosition);
+            this.face = currentPosition?"Face Detected":"No Face";
             if (currentPosition) {
                 this.overlayCanvasContext.clearRect(0, 0, this.w, this.h);
                 this.ctrack.draw(this.overlayCanvas);
-            }
-            // if (currentPosition) {
-            //     this.ctrack.draw(this.overlayCanvas);
-            //     // // Get the eyes rectangle and draw it in red:
-            //     const eyesRect = this.getEyesRectangle(currentPosition);
-            //     this.overlayCanvasContext.strokeStyle = 'red';
-            //     this.overlayCanvasContext.strokeRect(eyesRect[0], eyesRect[1], eyesRect[2], eyesRect[3]);
 
-            //     console.log("tracking loop...")
+                const eyesRect = this.getEyesRectangle(currentPosition);
+                const resizeFactorX = this.video.videoWidth / this.video.width;
+                const resizeFactorY = this.video.videoHeight / this.video.height;
 
-            //     // const resizeFactorX = this.video.videoWidth / this.video.width;
-            //     // const resizeFactorY = this.video.videoHeight / this.video.height;
+                this.emitter.emit('canimage', {
+                    image: this.video,
+                    w: eyesRect[0] * resizeFactorX,
+                    h: eyesRect[1] * resizeFactorY,
+                    w1: eyesRect[0] * resizeFactorX,
+                    h2: eyesRect[1] * resizeFactorY
+                })
 
-            //     // this.$emit('data-image',{
-            //     //   image:this.video,
-            //     //   w:eyesRect[0] * resizeFactorX, 
-            //     //   h:eyesRect[1] * resizeFactorY,
-            //     //   w1:eyesRect[0] * resizeFactorX,
-            //     //   h2:eyesRect[1] * resizeFactorY
-            //     // })
-
-            //     // The video might internally have a different size, so we need these
-            //     // factors to rescale the eyes rectangle before cropping:
-            //     // const resizeFactorX = this.video.videoWidth / this.video.width;
-            //     //const resizeFactorY = this.video.videoHeight / this.video.height;
-
-            //     // // Crop the eyes from the video and paste them in the eyes canvas:  
-            //     // this.eyesCanvasContext.drawImage(
-            //     //     this.video,
-            //     //     eyesRect[0] * resizeFactorX, eyesRect[1] * resizeFactorY,
-            //     //     eyesRect[2] * resizeFactorX, eyesRect[3] * resizeFactorY,
-            //     //     0, 0, this.eyesCanvas.width, this.eyesCanvas.height
-            //     // );
-            // }
+            } 
         },
         getEyesRectangle(positions) {
             const minX = positions[23][0] - 5;

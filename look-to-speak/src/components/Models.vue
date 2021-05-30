@@ -35,14 +35,17 @@ export default {
         }
     },
     methods: {
-        drawEyes() {
-            // this.eyesCanvasContext.drawImage(
-            //     this.video,
-            //     eyesRect[0] * resizeFactorX, eyesRect[1] * resizeFactorY,
-            //     eyesRect[2] * resizeFactorX, eyesRect[3] * resizeFactorY,
-            //     0, 0, this.eyesCanvas.width, this.eyesCanvas.height
-            // );
-        },
+         observer() {  
+            this.emitter.on("canimage",data=>{ 
+                console.log(data.image)
+                  this.eyesCanvasContext.drawImage(
+                        data.image,
+                        data.w, data.h,
+                        data.w1, data.h1,
+                        0, 0, this.canvasWidth, this.canvasHeight
+                    );
+            })
+        }, 
         createModel() {
             this.canvasWidth = this.eyesCanvas.width
             this.canvasHeight = this.eyesCanvas.height 
@@ -83,6 +86,7 @@ export default {
     mounted() {
         this.eyesCanvas = this.$refs.eyes;
         this.eyesCanvasContext = this.eyesCanvas.getContext('2d')
+        this.observer()
         this.createModel() 
     }
 }

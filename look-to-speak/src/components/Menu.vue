@@ -43,11 +43,7 @@ export default {
                 if (side == "left") this.leftSelect()
                 else if (side == "right") this.rightSelect()
                 this.resetHighlight()
-            })
-
-            this.emitter.on("data-image",data=>{
-                console.log(data)
-            })
+            }) 
         },
         leftSelect() {
             if (this.leftMenu.length < 2) {
