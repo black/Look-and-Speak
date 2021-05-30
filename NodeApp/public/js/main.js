@@ -171,6 +171,14 @@ $(document).ready(function () {
         video: true
     }).then(onStreaming);
 
+    function onStreaming(stream) {
+        video.srcObject = stream;
+        /*start face tracking*/
+        ctrack.start(video);
+        /*draw on face tracking*/
+        trackingLoop();
+    }
+
     function trackingLoop() {
         // Check if a face is detected, and if so, track it.
         requestAnimationFrame(trackingLoop);
@@ -201,14 +209,6 @@ $(document).ready(function () {
                 0, 0, eyesCanvas.width, eyesCanvas.height
             );
         }
-    }
-
-    function onStreaming(stream) {
-        video.srcObject = stream;
-        /*start face tracking*/
-        ctrack.start(video);
-        /*draw on face tracking*/
-        trackingLoop();
     }
 
 

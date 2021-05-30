@@ -10,6 +10,7 @@
         <div @click="trainModel()" class="cursor-pointer px-7 py-3 bg-green-500 text-green-800 rounded font-semibold">TRAIN</div>
         <div @click="startPrediction()" class="cursor-pointer px-7 py-3 bg-green-300 text-green-800 rounded font-semibold">PREDICT</div>
     </div>
+    <div @click="resetModel()" class="cursor-pointer px-7 py-3 bg-green-500 text-green-800 rounded font-semibold text-center">RESET MODEL</div>
 </div>
 </template>
 
@@ -19,13 +20,15 @@ import EyeModel from '@/ml/models.js'
 export default {
     name: 'Model',
     props: {
-        msg: String
+        msg: String,
+        img:[]
     },
     data() {
         return {
             status: "STATUS",
             imageChannels: 3,
-            model: new EyeModel(),
+            model: null,
+            eyesCanvas: null,
             eyesCanvasContext: null,
             canvasWidth: 0,
             canvasHeight: 0
@@ -41,33 +44,46 @@ export default {
             // );
         },
         createModel() {
-            this.canvasWidth = this.canEyes.width
-            this.canvasHeight = this.canEyes.height
-
+            this.canvasWidth = this.eyesCanvas.width
+            this.canvasHeight = this.eyesCanvas.height 
+            this.model = new EyeModel(this.eyesCanvas)
             this.model.createModel(this.canvasWidth, this.canvasHeight, 3)
             this.status = "Intializing Model" + this.canvasWidth + " \t" + this.canvasHeight;
         },
         dataCollect() {
             //    this.model.dataCollect(this.elm,)
             this.status = "Collecting Data";
-            this.emitter.emit('trigger','left')
+          //  this.emitter.emit('trigger', 'left')
         },
         trainModel() {
-            //    this.model.trainModel()
-            this.status = "Training Model";
-            this.emitter.emit('trigger','right')
+            this.model.trainModel()
+            this.status = "Training Model"; 
         },
         startPrediction() {
             this.status = "Predicting";
-            // this.model.predict(this.elm,data=>{
-            //   console.log(data)
-            // })
+            this.model.predict(this.elm, data => {
+                console.log(data)
+                switch (data) {
+                    case 0: 
+                        this.emitter.emit('trigger', 'left')
+                        break;
+                    case 1:
+                        this.emitter.emit('trigger', 'right')
+                        break;
+                    default:
+                        this.emitter.emit('trigger', 'normal')
+                        break;
+                }
+            })
+        },
+        resetModel() {
+            this.model.resetModel()
         }
     },
     mounted() {
-        // this.createModel()
-        this.eyesCanvasContext = this.$refs.eyes.getContext('2d')
-        console.log("mounted")
+        this.eyesCanvas = this.$refs.eyes;
+        this.eyesCanvasContext = this.eyesCanvas.getContext('2d')
+        this.createModel() 
     }
 }
 </script>

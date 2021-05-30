@@ -2,8 +2,8 @@
 <div class="flex items-center justify-center h-screen">
     <div class="flex">
         <WebCam />
-        <Models />
         <Menu />
+        <Models />
     </div>
 </div>
 </template>

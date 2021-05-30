@@ -3,10 +3,11 @@
 import * as tf from '@tensorflow/tfjs'
 
 export default class EyeModel {
-    constructor() {
+    constructor(elm) {
         this.model = tf.sequential();
         this.imageArray = []
         this.labelArray = []
+        this.elm = elm
     }
 
     createModel(w, h, ch) {
@@ -50,14 +51,7 @@ export default class EyeModel {
             activation: 'softmax',
         }
         this.model.add(tf.layers.dense(congfig_output));
-    }
 
-    resetModel() {
-        tf.dispose(this.model);
-        this.model = tf.sequential();
-    }
-
-    trainModel() {
         // Use ADAM optimizer with learning rate of 0.0005 and MSE loss
         const LEARNING_RATE = 0.0005;
         const optimizer = tf.train.adam(LEARNING_RATE);
@@ -67,8 +61,15 @@ export default class EyeModel {
             metrics: ['accuracy']
         }
         this.model.compile(config_compile);
-        this.model.summary();
+        // this.model.summary();
+    }
 
+    resetModel() {
+        tf.dispose(this.model);
+        this.model = tf.sequential();
+    }
+
+    trainModel() {
         let imageSet = tf.tidy(() => {
             const imgset = tf.concat(this.imageArray);
             return imgset;
