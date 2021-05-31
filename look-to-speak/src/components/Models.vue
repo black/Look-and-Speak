@@ -1,73 +1,131 @@
 <template>
 <div class="flex flex-col p-10 gap-5 bg-green-600">
-    <canvas ref="eyes" id="eyes" width="300" height="150" class="rounded bg-green-200"></canvas>
+    <div class="relative ">
+        <div class="flex items-center">
+            <canvas ref="eyes" id="eyes" width="300" height="150" class="rounded bg-green-200"></canvas>
+        </div>
+        <div class="absolute top-0 p-3">
+            <span>{{eyes.w }}</span>x<span>{{eyes.h}}</span>
+        </div> 
+    </div>
     <button type="button" class="bg-green-300 rounded flex items-center al py-3 px-5" disabled>
-        <img class="animate-spin h-6 p-1" src="../assets/loading.svg">
-        <span>{{status}}</span>
+        <span class="px-5">{{status}}</span>
+        <progress class="rounded" v-bind:value="counter" v-bind:max="maxprog"></progress>
     </button>
     <div class="flex gap-5">
-        <div @click="dataCollect()" class="cursor-pointer px-7 py-3 bg-green-500 text-green-800 rounded font-semibold">COLLECT</div>
-        <div @click="trainModel()" class="cursor-pointer px-7 py-3 bg-green-500 text-green-800 rounded font-semibold">TRAIN</div>
-        <div @click="startPrediction()" class="cursor-pointer px-7 py-3 bg-green-300 text-green-800 rounded font-semibold">PREDICT</div>
+        <div @click="dataCollect()" class="cursor-pointer px-7 py-3 bg-green-300 text-green-800 rounded font-semibold" v-bind:class="{'bg-green-500':state.collect}">COLLECT</div>
+        <div @click="trainModel()" class="cursor-pointer px-7 py-3 bg-green-300 text-green-800 rounded font-semibold" v-bind:class="{'bg-green-500': state.train}">TRAIN</div>
+        <div @click="startPrediction()" class="cursor-pointer px-7 py-3 bg-green-300 text-green-800 rounded font-semibold" v-bind:class="{'bg-green-500': state.predict}">PREDICT</div>
     </div>
     <div @click="resetModel()" class="cursor-pointer px-7 py-3 bg-green-500 text-green-800 rounded font-semibold text-center">RESET MODEL</div>
+    <input type="text" @keydown="createDataSet" class="hidden">
 </div>
 </template>
 
 <script>
-import EyeModel from '@/ml/models.js'
+import * as tf from '@tensorflow/tfjs'
+import EyeModel from '@/ml/EyeModel.js'
 
 export default {
     name: 'Model',
     props: {
         msg: String,
-        img:[]
+        img: []
     },
     data() {
         return {
             status: "STATUS",
             imageChannels: 3,
             model: null,
-            eyesCanvas: null,
-            eyesCanvasContext: null,
-            canvasWidth: 0,
-            canvasHeight: 0
+            eyes: {
+                canvas: null,
+                context: null,
+                w: 0,
+                h: 0,
+            },
+            state: {
+                collect: false,
+                train: false,
+                predict: false
+            },
+            label: 0,
+            imageArray: [],
+            labelArray: [],
+            counter: 0,
+            maxprog: 100
         }
     },
     methods: {
-         observer() {  
-            this.emitter.on("canimage",data=>{ 
-                console.log(data.image)
-                  this.eyesCanvasContext.drawImage(
-                        data.image,
-                        data.w, data.h,
-                        data.w1, data.h1,
-                        0, 0, this.canvasWidth, this.canvasHeight
-                    );
-            })
-        }, 
-        createModel() {
-            this.canvasWidth = this.eyesCanvas.width
-            this.canvasHeight = this.eyesCanvas.height 
-            this.model = new EyeModel(this.eyesCanvas)
-            this.model.createModel(this.canvasWidth, this.canvasHeight, 3)
-            this.status = "Intializing Model" + this.canvasWidth + " \t" + this.canvasHeight;
+        observer() {
+            // this.emitter.on("canimage", () => {
+            //     // console.log(data)
+            //     // this.eyesCanvasContext.drawImage(
+            //     //     './assets/logo.svg',
+            //     //     data.w, data.h,
+            //     //     data.w1, data.h1,
+            //     //     0, 0, this.canvasWidth, this.canvasHeight
+            //     // );
+            // })
+        },
+        initCanvas() {
+            this.eyes.canvas = this.$refs.eyes;
+            this.eyes.context = this.eyes.canvas.getContext('2d')
+            this.eyes.w = this.eyes.canvas.width
+            this.eyes.h = this.eyes.canvas.height
+        },
+        initModel() {
+            this.model = new EyeModel()
+            this.model.createModel(this.eyes.w, this.eyes.h, 3)
+            this.status = "Init Model ";
         },
         dataCollect() {
-            //    this.model.dataCollect(this.elm,)
-            this.status = "Collecting Data";
-          //  this.emitter.emit('trigger', 'left')
+            this.state.collect = !this.state.collect;
+            this.status = this.state.collect ? "Collecting Data" : "Stopped Collecting";
+            this.maxprog = 5;
+            let grab = setInterval(() => {
+                if (this.counter > this.maxprog - 1) {
+                    this.state.collect = !this.state.collect;
+                    this.counter = 0;
+                    console.log(this.labelArray.toString())
+                    clearInterval(grab)
+                    return;
+                }
+                this.collectData()
+                this.counter++;
+            }, 100)
+
         },
         trainModel() {
-            this.model.trainModel()
-            this.status = "Training Model"; 
+            if (this.state.collect) {
+                alert("Data is stll collecting")
+                return;
+            }
+            this.maxprog = 10;
+            this.state.train = !this.state.train;
+            this.status = this.state.train ? "Start Training" : "Stopped Training";
+            this.model.trainModel(this.imageArray, this.labelArray).then(results => {
+                console.log("Traing End", results);
+                this.state.train = !this.state.train;
+            });
         },
         startPrediction() {
-            this.status = "Predicting";
-            this.model.predict(this.elm, data => {
-                console.log(data)
+
+            if (this.status.train) {
+                alert("Model is stll traning")
+                return
+            }
+
+            console.log(this.imageArray.length)
+
+            this.state.predict = !this.state.predict;
+            this.status = this.state.predict ? "Start Predicting" : "Stopped Predicting";
+
+            this.model.predict(this.getImage(), data => {
+                if (!this.state.predict) {
+                    return;
+                }
                 switch (data) {
-                    case 0: 
+                    case 0:
                         this.emitter.emit('trigger', 'left')
                         break;
                     case 1:
@@ -81,13 +139,28 @@ export default {
         },
         resetModel() {
             this.model.resetModel()
+        },
+        collectData() {
+            const img = tf.tidy(() => {
+                const captureImg = this.getImage();
+                return captureImg;
+            })
+            this.imageArray.push(img)
+            this.label = parseInt(Math.random() * 3)
+            this.labelArray.push(this.label) //--- labels are 0,1,2
+        },
+        getImage() {
+            return tf.tidy(() => {
+                const image = tf.browser.fromPixels(this.eyes.canvas);
+                const batchedImage = image.expandDims(0);
+                const norm = batchedImage.toFloat().div(tf.scalar(255)).sub(tf.scalar(1));
+                return norm;
+            });
         }
     },
     mounted() {
-        this.eyesCanvas = this.$refs.eyes;
-        this.eyesCanvasContext = this.eyesCanvas.getContext('2d')
-        this.observer()
-        this.createModel() 
+        this.initCanvas()
+        this.initModel()
     }
 }
 </script>
@@ -97,3 +170,7 @@ export default {
 <style scoped>
  
 </style>
+
+Home -->
+    WebCam.vue  
+    Canvas.vue

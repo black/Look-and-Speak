@@ -1,16 +1,13 @@
 "use strict"
-
 import * as tf from '@tensorflow/tfjs'
 
 export default class EyeModel {
-    constructor(elm) {
-        this.model = tf.sequential();
-        this.imageArray = []
-        this.labelArray = []
-        this.elm = elm
+    constructor() {
+
     }
 
     createModel(w, h, ch) {
+        this.model = tf.sequential();
         let config_one = {
             kernelSize: 3,
             filters: 20,
@@ -61,7 +58,7 @@ export default class EyeModel {
             metrics: ['accuracy']
         }
         this.model.compile(config_compile);
-        // this.model.summary();
+        this.model.summary();
     }
 
     resetModel() {
@@ -69,15 +66,17 @@ export default class EyeModel {
         this.model = tf.sequential();
     }
 
-    trainModel() {
+    async trainModel(imageArray, labelArray) {
+        console.log(imageArray[0], labelArray[0])
         let imageSet = tf.tidy(() => {
-            const imgset = tf.concat(this.imageArray);
-            return imgset;
+            return tf.concat(imageArray);
         });
-        let labelSet = tf.oneHot(tf.tensor1d(this.labelArray, 'int32'), 3);
+        let labelSet = tf.oneHot(tf.tensor1d(labelArray, 'int32'), 3);
 
-        this.model.fit(imageSet, labelSet, {
-            batchSize: 10,
+        console.log(imageSet.size, labelSet.size, tf.memory())
+
+        await this.model.fit(imageSet, labelSet, {
+            batchSize: 2,
             epochs: 10,
             shuffle: true,
             validationSplit: 0.1,
@@ -85,55 +84,21 @@ export default class EyeModel {
                 onTrainBegin: () => console.log("Training Start"),
                 onTrainEnd: () => console.log("Traing End"),
                 onEpochEnd: (epoch, logs) => {
-                    console.log("Epoch-->", epoch, logs)
+                    console.log(epoch, logs)
                 }
             }
         })
     }
 
-    predict(el, callback) {
+    predict(data, callback) {
         tf.tidy(() => {
-            const prediction = this.model.predict(this.getImage(el));
+            const prediction = this.model.predict(data);
             prediction.data().then(pred => {
                 console.log('prediction', pred);
                 const max = Math.max.apply(Math, pred.map((i) => i));
                 const maxIndex = pred.indexOf(max);
                 callback(maxIndex)
-                // switch (maxIndex) {
-                //     case 0:
-                //         console.log("left");
-                //         $('.panels').removeClass('bg-primary')
-                //         $('#left').addClass('bg-primary')
-                //         break;
-                //     case 1:
-                //         console.log("normal");
-                //         $('.panels').removeClass('bg-primary')
-                //         $('#normal').addClass('bg-primary')
-                //     case 2:
-                //         console.log("right");
-                //         $('.panels').removeClass('bg-primary')
-                //         $('#right').addClass('bg-primary')
-                // }
             })
-        });
-    }
-
-    collectData(el, label) {
-        const img = tf.tidy(() => {
-            const captureImg = this.getImage(el);
-            //console.log(captureImg.shape)
-            return captureImg;
-        })
-        this.imageArray.push(img)
-        this.labelArray.push(label) //--- labels are 0,1,2
-    }
-
-    getImage(el) {
-        return tf.tidy(function () {
-            const image = tf.browser.fromPixels(el);
-            const batchedImage = image.expandDims(0);
-            const norm = batchedImage.toFloat().div(tf.scalar(255)).sub(tf.scalar(1));
-            return norm;
         });
     }
 }

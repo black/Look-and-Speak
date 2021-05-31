@@ -1,13 +1,13 @@
-<template> 
-<div class="bg-green-400">
-    <div class="p-10">
-        <div class="relative h-100 w-100 ">
-            <video ref="webcam" id="webcam" class="rounded" width="400" height="300" autoplay loop></video>
-            <canvas ref="overlay" id="overlay" class="absolute rounded top-0" width="400" height="300"></canvas>
-        </div>
+<template>
+ <div class="bg-green-400">
+     <div class="p-10">
+         <div class="relative h-100 w-100 ">
+             <video ref="webcam" id="webcam" class="rounded" width="400" height="300" autoplay loop></video>
+             <canvas ref="overlay" id="overlay" class="absolute rounded top-0" width="400" height="300"></canvas>
+         </div>
          <div class="cursor-pointer px-7 py-3 bg-green-500 text-green-800 rounded font-semibold text-center">{{face}}</div>
-    </div>
-</div>
+     </div>
+ </div>
 </template>
 
 <script>
@@ -61,12 +61,14 @@ export default {
 
             // Check if a face is detected, and if so, track it.
             let currentPosition = this.ctrack.getCurrentPosition();
-            this.face = currentPosition?"Face Detected":"No Face";
+            this.face = currentPosition ? "Face Detected" : "No Face";
             if (currentPosition) {
                 this.overlayCanvasContext.clearRect(0, 0, this.w, this.h);
                 this.ctrack.draw(this.overlayCanvas);
 
                 const eyesRect = this.getEyesRectangle(currentPosition);
+                this.overlayCanvasContext.strokeStyle = 'red';
+                this.overlayCanvasContext.strokeRect(eyesRect[0], eyesRect[1], eyesRect[2], eyesRect[3]);
                 const resizeFactorX = this.video.videoWidth / this.video.width;
                 const resizeFactorY = this.video.videoHeight / this.video.height;
 
@@ -78,7 +80,9 @@ export default {
                     h2: eyesRect[1] * resizeFactorY
                 })
 
-            } 
+                
+
+            }
         },
         getEyesRectangle(positions) {
             const minX = positions[23][0] - 5;
