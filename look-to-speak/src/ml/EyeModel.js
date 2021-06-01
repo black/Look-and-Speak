@@ -1,10 +1,6 @@
-"use strict"
 import * as tf from '@tensorflow/tfjs'
 
 export default class EyeModel {
-    constructor() {
-
-    }
 
     createModel(w, h, ch) {
         this.model = tf.sequential();
@@ -58,7 +54,6 @@ export default class EyeModel {
             metrics: ['accuracy']
         }
         this.model.compile(config_compile);
-        this.model.summary();
     }
 
     resetModel() {
@@ -66,28 +61,35 @@ export default class EyeModel {
         this.model = tf.sequential();
     }
 
-    async trainModel(imageArray, labelArray) {
-        console.log(imageArray[0], labelArray[0])
-        let imageSet = tf.tidy(() => {
-            return tf.concat(imageArray);
+    trainModel(imageArray, labelArray) {
+        // this.model.summary();
+        // let newArray = imageArray
+        // console.log('-->', newArray.toString(), labelArray.toString());
+        console.log("tet", imageArray, labelArray)
+
+        let imageSet = tf.tidy(function () {
+            let im = tf.stack(imageArray)
+            return im;
         });
-        let labelSet = tf.oneHot(tf.tensor1d(labelArray, 'int32'), 3);
+        console.log(imageSet);
+        // let labelSet = tf.oneHot(tf.tensor1d(labelArray, 'int32'), 3);
 
-        console.log(imageSet.size, labelSet.size, tf.memory())
+        // console.log(imageSet.size, labelSet.size, tf.memory())
 
-        await this.model.fit(imageSet, labelSet, {
-            batchSize: 2,
-            epochs: 10,
-            shuffle: true,
-            validationSplit: 0.1,
-            callbacks: {
-                onTrainBegin: () => console.log("Training Start"),
-                onTrainEnd: () => console.log("Traing End"),
-                onEpochEnd: (epoch, logs) => {
-                    console.log(epoch, logs)
-                }
-            }
-        })
+        // await this.model.fit(imageSet, labelSet, {
+        //     batchSize: 2,
+        //     epochs: 10,
+        //     shuffle: true,
+        //     validationSplit: 0.1,
+        //     callbacks: {
+        //         onTrainBegin: () => console.log("Training Start"),
+        //         onTrainEnd: () => console.log("Traing End"),
+        //         onEpochEnd: (epoch, logs) => {
+        //             console.log(epoch, logs)
+        //         }
+        //     }
+        // })
+        // tf.dispose([imageArray, labelArray]);
     }
 
     predict(data, callback) {
