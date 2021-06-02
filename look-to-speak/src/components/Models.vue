@@ -23,9 +23,8 @@
 </template>
 
 <script>
+import * as tf from '@tensorflow/tfjs'
 import EyeModel from '@/ml/EyeModel.js'
-import * as tf from '@tensorflow/tfjs' 
-
 
 export default {
     name: 'Model',
@@ -37,7 +36,7 @@ export default {
         return {
             status: "STATUS",
             imageChannels: 3,
-            eyemodel: null,
+            model: null,
             eyes: {
                 canvas: null,
                 context: null,
@@ -64,7 +63,7 @@ export default {
             //     //     './assets/logo.svg',
             //     //     data.w, data.h,
             //     //     data.w1, data.h1,
-            //     //     0, 0, this.canvasWidth, this.canvasHeicsght
+            //     //     0, 0, this.canvasWidth, this.canvasHeight
             //     // );
             // })
         },
@@ -75,9 +74,9 @@ export default {
             this.eyes.h = this.eyes.canvas.height
         },
         initModel() {
-            this.eyemodel = new EyeModel()
-            this.eyemodel.createModel(this.eyes.w, this.eyes.h, 3)
-            this.status = "Init Model "
+            this.model = new EyeModel()
+            this.model.createModel(this.eyes.w, this.eyes.h, 3)
+            this.status = "Init Model ";
         },
         dataCollect() {
             this.state.collect = !this.state.collect;
@@ -104,19 +103,24 @@ export default {
             this.maxprog = 10;
             this.state.train = !this.state.train;
             this.status = this.state.train ? "Start Training" : "Stopped Training";
-            this.eyemodel.trainModel(this.imageArray,this.labelArray);
+            this.model.trainModel(this.imageArray, this.labelArray).then(results => {
+                console.log("Traing End", results);
+                this.state.train = !this.state.train;
+            });
         },
         startPrediction() {
 
             if (this.status.train) {
                 alert("Model is stll traning")
                 return
-            } 
+            }
+
+            console.log(this.imageArray.length)
 
             this.state.predict = !this.state.predict;
             this.status = this.state.predict ? "Start Predicting" : "Stopped Predicting";
 
-            this.eyemodel.predict(this.getImage(), data => {
+            this.model.predict(this.getImage(), data => {
                 if (!this.state.predict) {
                     return;
                 }
@@ -134,7 +138,7 @@ export default {
             })
         },
         resetModel() {
-            this.eyemodel.resetModel()
+            this.model.resetModel()
         },
         collectData() {
             const img = tf.tidy(() => {
