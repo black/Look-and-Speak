@@ -1,13 +1,17 @@
 "use strict"
 import * as tf from '@tensorflow/tfjs'
-
+import '@tensorflow/tfjs-core'
 export default class EyeModel {
     constructor() {
+        this.model = tf.sequential();
+    }
 
+    resetModel() {
+        tf.dispose(this.model);
+        this.model = tf.sequential();
     }
 
     createModel(w, h, ch) {
-        this.model = tf.sequential();
         let config_one = {
             kernelSize: 3,
             filters: 20,
@@ -54,40 +58,41 @@ export default class EyeModel {
         const optimizer = tf.train.adam(LEARNING_RATE);
         let config_compile = {
             optimizer: optimizer,
-            loss: 'categoricalCrossentropy',
+            loss: tf.metrics.categoricalCrossentropy,
             metrics: ['accuracy']
         }
         this.model.compile(config_compile);
-        this.model.summary();
+
     }
 
-    resetModel() {
-        tf.dispose(this.model);
-        this.model = tf.sequential();
-    }
 
     async trainModel(imageArray, labelArray) {
-        console.log(imageArray[0], labelArray[0])
-        let imageSet = tf.tidy(() => {
-            return tf.concat(imageArray);
-        });
-        let labelSet = tf.oneHot(tf.tensor1d(labelArray, 'int32'), 3);
+        // tf.getBackend()
+        let t1 = tf.concat(tf.tensor(imageArray));
+        console.log(t1.shape, labelArray.length)
 
-        console.log(imageSet.size, labelSet.size, tf.memory())
+        // let imageSet = tf.tidy(() => {
+        //     return tf.concat(tf.tensor(imageArray));
+        // });
+        // let labelSet = tf.tidy(() => {
+        //     return tf.oneHot(tf.tensor1d(labelArray, 'int32'), 3);
+        // })
 
-        await this.model.fit(imageSet, labelSet, {
-            batchSize: 2,
-            epochs: 10,
-            shuffle: true,
-            validationSplit: 0.1,
-            callbacks: {
-                onTrainBegin: () => console.log("Training Start"),
-                onTrainEnd: () => console.log("Traing End"),
-                onEpochEnd: (epoch, logs) => {
-                    console.log(epoch, logs)
-                }
-            }
-        })
+        // console.log('please print--->>>>', imageSet.size, labelSet.size, imageArray.length)
+
+        // await this.model.fit(imageSet, labelSet, {
+        //     batchSize: 2,
+        //     epochs: 10,
+        //     shuffle: true,
+        //     validationSplit: 0.1,
+        //     callbacks: {
+        //         onTrainBegin: () => console.log("Training Start"),
+        //         onTrainEnd: () => console.log("Traing End"),
+        //         onEpochEnd: (epoch, logs) => {
+        //             console.log(epoch, logs)
+        //         }
+        //     }
+        // })
     }
 
     predict(data, callback) {

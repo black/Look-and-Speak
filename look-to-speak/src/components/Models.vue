@@ -2,11 +2,11 @@
 <div class="flex flex-col p-10 gap-5 bg-green-600">
     <div class="relative ">
         <div class="flex items-center">
-            <canvas ref="eyes" id="eyes" width="300" height="150" class="rounded bg-green-200"></canvas>
+            <canvas ref="eyes" id="eyes" width="300" height="150" class="rounded border"></canvas>
         </div>
         <div class="absolute top-0 p-3">
             <span>{{eyes.w }}</span>x<span>{{eyes.h}}</span>
-        </div> 
+        </div>
     </div>
     <button type="button" class="bg-green-300 rounded flex items-center al py-3 px-5" disabled>
         <span class="px-5">{{status}}</span>
@@ -24,6 +24,7 @@
 
 <script>
 import * as tf from '@tensorflow/tfjs'
+import '@tensorflow/tfjs-core'
 import EyeModel from '@/ml/EyeModel.js'
 
 export default {
@@ -56,22 +57,20 @@ export default {
         }
     },
     methods: {
-        observer() {
-            // this.emitter.on("canimage", () => {
-            //     // console.log(data)
-            //     // this.eyesCanvasContext.drawImage(
-            //     //     './assets/logo.svg',
-            //     //     data.w, data.h,
-            //     //     data.w1, data.h1,
-            //     //     0, 0, this.canvasWidth, this.canvasHeight
-            //     // );
-            // })
-        },
         initCanvas() {
             this.eyes.canvas = this.$refs.eyes;
             this.eyes.context = this.eyes.canvas.getContext('2d')
             this.eyes.w = this.eyes.canvas.width
-            this.eyes.h = this.eyes.canvas.height
+            this.eyes.h = this.eyes.canvas.height 
+            this.drawBgImg() 
+        },
+        drawBgImg() { 
+            let bgImg = new Image();
+            bgImg.crossOrigin = "anonymous";
+            bgImg.src = 'http://i.imgur.com/yf6d9SX.jpg';
+            bgImg.onload = () => { 
+                this.eyes.context.drawImage(bgImg, 0, 0);
+            }
         },
         initModel() {
             this.model = new EyeModel()
@@ -86,7 +85,6 @@ export default {
                 if (this.counter > this.maxprog - 1) {
                     this.state.collect = !this.state.collect;
                     this.counter = 0;
-                    console.log(this.labelArray.toString())
                     clearInterval(grab)
                     return;
                 }
@@ -109,18 +107,18 @@ export default {
             });
         },
         startPrediction() {
-
             if (this.status.train) {
                 alert("Model is stll traning")
                 return
             }
 
-            console.log(this.imageArray.length)
-
             this.state.predict = !this.state.predict;
             this.status = this.state.predict ? "Start Predicting" : "Stopped Predicting";
-
-            this.model.predict(this.getImage(), data => {
+            let imgData = this.getImage()
+            console.log(imgData)
+            console.log(imgData.shape)
+            console.log(imgData.toString())
+            this.model.predict(imgData, data => {
                 if (!this.state.predict) {
                     return;
                 }
@@ -142,7 +140,7 @@ export default {
         },
         collectData() {
             const img = tf.tidy(() => {
-                const captureImg = this.getImage();
+                const captureImg = this.getImage(); 
                 return captureImg;
             })
             this.imageArray.push(img)
@@ -168,9 +166,5 @@ export default {
 <!-- Add "scoped" attribute to limit CSS to this component only -->
 
 <style scoped>
- 
-</style>
 
-Home -->
-    WebCam.vue  
-    Canvas.vue
+</style>

@@ -9,6 +9,7 @@
   },
   "dependencies": {
     "@tensorflow/tfjs": "^3.6.0",
+    "@tensorflow/tfjs-core": "^3.6.0",
     "core-js": "^3.6.5",
     "mitt": "^2.1.0",
     "vue": "^3.0.0",
