@@ -3,7 +3,7 @@ import * as tf from '@tensorflow/tfjs'
 import '@tensorflow/tfjs-core'
 export default class EyeModel {
     constructor() {
-        this.model = tf.sequential();
+
     }
 
     resetModel() {
@@ -12,6 +12,7 @@ export default class EyeModel {
     }
 
     createModel(w, h, ch) {
+        this.model = tf.sequential();
         let config_one = {
             kernelSize: 3,
             filters: 20,
@@ -67,32 +68,27 @@ export default class EyeModel {
 
 
     async trainModel(imageArray, labelArray) {
-        // tf.getBackend()
-        let t1 = tf.concat(tf.tensor(imageArray));
-        console.log(t1.shape, labelArray.length)
 
-        // let imageSet = tf.tidy(() => {
-        //     return tf.concat(tf.tensor(imageArray));
-        // });
-        // let labelSet = tf.tidy(() => {
-        //     return tf.oneHot(tf.tensor1d(labelArray, 'int32'), 3);
-        // })
+        let imageSet = tf.concat(imageArray);
+        let labelSet = tf.oneHot(tf.tensor1d(labelArray, 'int32'), 3);
+
+        console.log('ima', labelSet, imageArray)
 
         // console.log('please print--->>>>', imageSet.size, labelSet.size, imageArray.length)
 
-        // await this.model.fit(imageSet, labelSet, {
-        //     batchSize: 2,
-        //     epochs: 10,
-        //     shuffle: true,
-        //     validationSplit: 0.1,
-        //     callbacks: {
-        //         onTrainBegin: () => console.log("Training Start"),
-        //         onTrainEnd: () => console.log("Traing End"),
-        //         onEpochEnd: (epoch, logs) => {
-        //             console.log(epoch, logs)
-        //         }
-        //     }
-        // })
+        await this.model.fit(imageSet, labelSet, {
+            batchSize: 2,
+            epochs: 10,
+            shuffle: true,
+            validationSplit: 0.1,
+            callbacks: {
+                onTrainBegin: () => console.log("Training Start"),
+                onTrainEnd: () => console.log("Traing End"),
+                onEpochEnd: (epoch, logs) => {
+                    console.log(epoch, logs)
+                }
+            }
+        })
     }
 
     predict(data, callback) {

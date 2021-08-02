@@ -137,6 +137,7 @@ export default {
         },
         resetModel() {
             this.model.resetModel()
+            this.initModel()
         },
         collectData() {
             const img = tf.tidy(() => {
